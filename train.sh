@@ -1,0 +1,1 @@
+python3 ./src/bert_mouth.py --bert_model ./model/Japanese_L-12_H-768_A-12_E-30_BPE/ --output_dir ./model/tachikoma_bert/ --train_file ./dat/train.txt --valid_file ./dat/valid.txt --max_seq_length 128 --do_train --train_batch_size 10 --num_train_epochs 300

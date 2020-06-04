@@ -1,0 +1,6 @@
+/model/
+__pycache__/
+.DS_Store
+/credentials/
+nohup.out
+logs/
