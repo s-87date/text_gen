@@ -1,4 +1,5 @@
 library(tidyverse)
+library(SRTtools)
 
 # function
 wiki.processor <- function(x){
@@ -38,12 +39,39 @@ write_delim(wiki.tachikoma, "dat/wiki/wikipedia_tachikoma_prepped.txt")
 nico.tachikoma <- wiki.processor(read.csv("dat/wiki/nicovideo_tachikoma.txt", header=FALSE))
 write_delim(nico.tachikoma, "dat/wiki/nicovideo_tachikoma_prepped.txt")
 
+#=== data from Netflix
+sac.srt <- SRTtools::srt.read("dat/SAC/攻殻機動隊 STAND ALONE COMPLEX-シーズン2-26-憂国への帰還 ENDLESS∞GIG_ja.srt")
+
+srt.script.names <- dir("dat/SAC", pattern="^攻殻機動隊.*srt$") %>%
+    paste0("dat/SAC/",.)
+srt.data.all <- srt.script.names %>%
+    purrr::map(function(x) srt.read(x)) %>% 
+    unlist() %>% 
+    enframe() %>% 
+    # 半角数字から始まるのは削除
+    dplyr::mutate(valid_flag = if_else(str_detect(value, "^\\d"),0,1)) %>% 
+    dplyr::filter(valid_flag==1) %>% 
+    # speakerとscriptを分ける
+    tidyr::separate(value, c("speaker", "content"), "）", fill="left") %>% 
+    # 無言除外
+    dplyr::filter(content!="") %>% 
+    # 最後の句点をつける
+    dplyr::mutate(content=str_replace(content, "$","。")) %>% 
+    # 始まり括弧抜く
+    dplyr::mutate(speaker=str_replace(speaker, "（","")) %>% 
+    # 話者を埋める、直前のNAでない値で
+    tidyr::fill(speaker, .direction="down")
+netflix.tachikoma <- srt.data.all %>% 
+    dplyr::filter(str_detect(speaker, "タチコマ")) %>% 
+    dplyr::select(content)
+write_delim(netflix.tachikoma, "dat/sac/netflix_tachikoma_prepped.txt")
 
 tachikoma.train <- rbind(
     tachikoma.script.arranged, 
     wiki.ai,
     wiki.tachikoma,
-    nico.tachikoma
+    nico.tachikoma,
+    netflix.tachikoma
     ) %>%
     # shuffle
     dplyr::mutate(random_id=rnorm(n(),0,1)) %>%
@@ -81,3 +109,5 @@ write_delim(tachikoma.train, "dat/tachikoma_train.txt")
 # write_delim(train, "dat/train.txt")
 # write_delim(valid, "dat/valid.txt")
 
+
+    

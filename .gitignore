@@ -4,3 +4,4 @@ __pycache__/
 /credentials/
 nohup.out
 logs/
+.Rproj.user
